@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>슬라임 연성 실험실</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="abyss-container">
+    <header class="abyss-header">
+      <h1 class="main-title">슬라임 연성 실험실</h1>
+    </header>
+
+    <main class="split-viewport">
+      <section class="viewport-panel macro-panel">
+        <div class="panel-header">
+          <span class="panel-badge">거시적 시점</span>
+          <span class="panel-heading">흑마법 슬라임 항아리</span>
+        </div>
+        <div class="canvas-box">
+          <canvas id="slimeCanvas" width="580" height="420"></canvas>
+        </div>
+      </section>
+
+      <section class="viewport-panel micro-panel">
+        <div class="panel-header">
+          <span class="panel-badge">미시적 시점</span>
+          <span class="panel-heading">고분자 가교결합 망원경</span>
+        </div>
+        <div class="canvas-box">
+          <canvas id="microCanvas" width="580" height="420"></canvas>
+        </div>
+      </section>
+    </main>
+
+    <footer class="spell-slots-panel">
+      <div class="spell-slot" id="step1">
+        <div class="slot-header">
+          <span class="slot-badge">Step 1</span>
+          <span class="slot-title">붕소 결합 촉매</span>
+        </div>
+        <button class="slot-btn btn-borax-cast" id="btnBorax">✨ 붕소 투입 주문</button>
+      </div>
+
+      <div class="spell-slot" id="step2">
+        <div class="slot-header">
+          <span class="slot-badge">Step 2</span>
+          <span class="slot-title">암흑 철가루</span>
+        </div>
+        <button class="slot-btn btn-iron-cast" id="btnIron">🌑 철가루 주입 주문</button>
+      </div>
+
+      <div class="spell-slot" id="step3">
+        <div class="slot-header">
+          <span class="slot-badge">Step 3</span>
+          <span class="slot-title">마력 자석 조종</span>
+        </div>
+        <button class="slot-btn btn-magnet-cast" id="btnMagnet">🧲 마법 자석 발동</button>
+      </div>
+
+      <div class="spell-slot" id="stepReset">
+        <div class="slot-header">
+          <span class="slot-badge">Reset</span>
+          <span class="slot-title">의식 초기화</span>
+        </div>
+        <button class="slot-btn btn-reset-cast" id="btnReset">🔄 시뮬레이션 초기화</button>
+      </div>
+
+      <div class="status-slot">
+        <div class="status-header">의식 기록</div>
+        <div class="status-log" id="statusLog">
+          [심연] 마법진이 활성화되었습니다. 주문을 주입하십시오.
+        </div>
+      </div>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
