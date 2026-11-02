@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>슬라임을 조종하는 흑마법사 | 2026 부산대학교 화학교육과 오픈랩</title>
 
-  <!-- ★ 거울 현상 방지: 이 발표 파일이 3장 창 안에 다시 불러와지면 감지 -->
+  <!-- 거울 현상 방지: 이 발표 파일이 시뮬레이션 창 안에 다시 불러와지면 감지 -->
   <script>
     window.__deckInFrame = (function () {
       try { return window.self !== window.top; } catch (e) { return true; }
@@ -16,25 +16,30 @@
     }
   </script>
 
-  <!-- 웹폰트 (Pretendard) -->
+  <!-- 웹폰트 (인터넷이 없으면 맑은 고딕으로 자동 대체) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { corePlugins: { preflight: false } };
-  </script>
-
   <style>
+    /* ===== 기준 단위: 화면 크기에 비례 (16:9 기준 1u = 화면 너비의 1%) ===== */
+    :root {
+      --u: min(1vw, 1.778vh);
+      --text: #f3e8ff;
+      --sub: #dccbf7;
+      --pink: #ff5fd2;
+      --violet: #b46bff;
+      --pva: #ff7b9c;
+      --borate: #6fe3ff;
+    }
     *, *::before, *::after { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; height: 100%; }
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #0b0514; }
+    p, h1, h2, h3, ul, ol { margin: 0; padding: 0; }
+    ul, ol { list-style: none; }
 
-    /* 거울 현상일 때: 발표 화면 대신 안내문만 표시 */
+    /* ===== 거울 현상 안내 ===== */
     .deck-in-frame #deck { display: none !important; }
     .deck-in-frame #mirrorNotice { display: flex !important; }
     #mirrorNotice {
-      display: none;
-      position: fixed; inset: 0;
+      display: none; position: fixed; inset: 0;
       align-items: center; justify-content: center; text-align: center;
       background: #0b0514; color: #f3e8ff;
       font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
@@ -43,12 +48,10 @@
 
     /* ===== 전체 틀 ===== */
     #deck {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      color: #f3e8ff;
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      overflow: hidden; outline: none;
+      color: var(--text);
       font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
       background-color: #0b0514;
       background-image:
@@ -57,67 +60,179 @@
         radial-gradient(ellipse 80% 60% at 50% 50%, rgba(60, 25, 110, 0.35), transparent 80%);
     }
 
-    /* ===== 슬라이드 전환 ===== */
+    /* ===== 상단 헤더 (얇게) ===== */
+    .topbar {
+      flex: 0 0 auto;
+      height: calc(var(--u) * 4.8);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 calc(var(--u) * 2);
+      border-bottom: 1px solid rgba(190, 130, 255, 0.18);
+      background: rgba(11, 5, 20, 0.55);
+    }
+    .header-logo { height: 100%; display: flex; align-items: center; }
+    .header-logo img { height: calc(var(--u) * 3.9); width: auto; display: block; }
+    #deck[data-slide="0"] .header-logo { visibility: hidden; }
+    .fallback-text { display: none; font-weight: 900; font-size: calc(var(--u) * 1.9); }
+    .top-right { display: flex; align-items: center; gap: calc(var(--u) * 1.4); }
+    .page-no {
+      font-size: calc(var(--u) * 1.35); font-weight: 700;
+      color: rgba(220, 200, 255, 0.55); font-variant-numeric: tabular-nums;
+    }
+    .badge {
+      font-size: calc(var(--u) * 1.45); font-weight: 700; white-space: nowrap;
+      padding: calc(var(--u) * 0.5) calc(var(--u) * 1.4);
+      border-radius: 999px; color: #f6e9ff;
+      border: 1px solid rgba(255, 95, 210, 0.55);
+      background: rgba(180, 107, 255, 0.14);
+      box-shadow: 0 0 18px rgba(255, 95, 210, 0.35);
+    }
+
+    /* ===== 슬라이드 ===== */
+    #stage { position: relative; flex: 1 1 auto; min-height: 0; }
     .slide {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
+      position: absolute; inset: 0;
+      opacity: 0; visibility: hidden; pointer-events: none;
       transform: translateY(14px);
       transition: opacity .45s ease, transform .45s ease, visibility 0s linear .45s;
     }
     .slide.is-active {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-      transform: none;
+      opacity: 1; visibility: visible; pointer-events: auto; transform: none;
       transition: opacity .45s ease, transform .45s ease, visibility 0s;
     }
-
-    /* ===== 공통 장식 ===== */
-    .neon-title {
-      background: linear-gradient(90deg, #d9b8ff 0%, #b46bff 45%, #ff5fd2 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+    .inner {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: calc(var(--u) * 2.2);
+      padding: calc(var(--u) * 1.6) calc(var(--u) * 3);
     }
-    .glass-card {
+
+    /* ===== 공통 ===== */
+    .neon {
+      background: linear-gradient(90deg, #d9b8ff 0%, #b46bff 45%, #ff5fd2 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .title {
+      flex: 0 0 auto;
+      font-size: calc(var(--u) * 4.4); font-weight: 900;
+      letter-spacing: -0.02em; line-height: 1.15; white-space: nowrap;
+    }
+    .title-row { flex: 0 0 auto; display: flex; align-items: center; gap: calc(var(--u) * 1.4); }
+    .chip {
+      font-size: calc(var(--u) * 1.7); font-weight: 800; white-space: nowrap; color: #fff;
+      padding: calc(var(--u) * 0.45) calc(var(--u) * 1.3); border-radius: 999px;
+      background: linear-gradient(90deg, #8f4dff, #ff5fd2);
+      box-shadow: 0 0 16px rgba(255, 95, 210, 0.5);
+    }
+    .card {
       background: linear-gradient(145deg, rgba(60, 30, 105, 0.55), rgba(30, 14, 58, 0.55));
       border: 1px solid rgba(190, 130, 255, 0.28);
       box-shadow: 0 0 0 1px rgba(255, 95, 210, 0.05), 0 18px 50px -18px rgba(180, 107, 255, 0.45);
-      backdrop-filter: blur(6px);
+      border-radius: calc(var(--u) * 1.8);
     }
-    .keep-all { word-break: keep-all; }
+    .num {
+      flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
+      font-weight: 900; color: #fff;
+      background: linear-gradient(135deg, #8f4dff, #ff5fd2);
+      box-shadow: 0 0 20px rgba(255, 95, 210, 0.45);
+    }
+    .hl { color: #ff9be6; font-weight: 800; }
+    .keep { word-break: keep-all; }
 
-    /* ===== 로고 흰 배경 제거 + 보라색 빛 ===== */
-    .logo-knockout {
-      filter: url(#removeWhite) drop-shadow(0 0 22px rgba(180, 107, 255, 0.55));
-    }
-    #deck[data-slide="0"] .header-logo { visibility: hidden; }
+    /* 로고 흰 배경 제거 + 보라색 빛 */
+    .logo-knockout { filter: url(#removeWhite) drop-shadow(0 0 22px rgba(180, 107, 255, 0.55)); }
 
-    /* ===== 점(Dot) 인디케이터 ===== */
-    .dot {
-      width: 12px; height: 12px;
-      border-radius: 9999px; border: 0; padding: 0;
-      cursor: pointer;
-      background: rgba(210, 180, 255, 0.28);
-      transition: all .3s ease;
-    }
-    .dot.is-active {
-      width: 34px;
-      background: linear-gradient(90deg, #b46bff, #ff5fd2);
-      box-shadow: 0 0 12px rgba(255, 95, 210, 0.7);
-    }
+    /* ===== 1장: 인트로 ===== */
+    .intro { gap: calc(var(--u) * 1.2); padding: calc(var(--u) * 1.2) calc(var(--u) * 3); }
+    .hero-logo { display: block; flex: 0 0 auto; height: calc(var(--u) * 17); max-width: 90%; width: auto; object-fit: contain; }
+    .hero-fallback { display: none; font-size: calc(var(--u) * 5.5); font-weight: 900; white-space: nowrap; }
+    .video-wrap { flex: 1 1 auto; min-height: 0; width: 100%; display: flex; justify-content: center; }
+    .video-card { height: 100%; max-width: 100%; aspect-ratio: 16 / 9; padding: calc(var(--u) * 0.5); }
+    .video-card video { display: block; width: 100%; height: 100%; object-fit: contain; border-radius: calc(var(--u) * 1.3); background: #000; }
 
-    /* ===== 3장: 시뮬레이션 창 (화면에 맞게 자동 축소) ===== */
-    #simFrame {
-      position: absolute;
-      left: 0; top: 0;
-      border: 0;
-      transform-origin: 0 0;
-      background: transparent;
+    /* ===== 2장: 실험 목표 ===== */
+    .goals { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * 2.5); width: 100%; max-width: calc(var(--u) * 94); }
+    .goal { padding: calc(var(--u) * 4) calc(var(--u) * 2.6); display: flex; flex-direction: column; align-items: center; text-align: center; gap: calc(var(--u) * 2.2); }
+    .goal .num { width: calc(var(--u) * 6.4); height: calc(var(--u) * 6.4); border-radius: calc(var(--u) * 1.5); font-size: calc(var(--u) * 2.9); }
+    .goal-h { font-size: calc(var(--u) * 3); font-weight: 900; color: #fff; white-space: nowrap; }
+    .goal-d { font-size: calc(var(--u) * 2.2); line-height: 1.55; color: var(--sub); word-break: keep-all; }
+
+    /* ===== 3장: 이론 ① 재료 ===== */
+    .mat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(var(--u) * 2); width: 100%; }
+    .mat { padding: calc(var(--u) * 2) calc(var(--u) * 2.2); display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 1); }
+    .mat svg { height: calc(var(--u) * 7.5); width: 100%; }
+    .mat-name { font-size: calc(var(--u) * 2.7); font-weight: 900; color: #fff; white-space: nowrap; }
+    .mat-sub { font-size: calc(var(--u) * 1.8); font-weight: 700; }
+    .bullets { align-self: stretch; display: flex; flex-direction: column; gap: calc(var(--u) * 0.9); margin-top: calc(var(--u) * 0.5); }
+    .bullets li { position: relative; padding-left: calc(var(--u) * 1.7); font-size: calc(var(--u) * 2); line-height: 1.4; word-break: keep-all; }
+    .bullets li::before { content: ''; position: absolute; left: 0; top: 0.5em; width: calc(var(--u) * 0.65); height: calc(var(--u) * 0.65); border-radius: 50%; background: var(--pink); box-shadow: 0 0 8px var(--pink); }
+    .sum-bar { padding: calc(var(--u) * 1.2) calc(var(--u) * 3); font-size: calc(var(--u) * 2.4); font-weight: 800; text-align: center; white-space: nowrap; }
+
+    /* ===== 4장: 이론 ② 가교결합 ===== */
+    .xl-inner { gap: calc(var(--u) * 1.6); }
+    .xl-row { display: flex; align-items: center; justify-content: center; gap: calc(var(--u) * 1.6); width: 100%; }
+    .xl-panel { flex: 1 1 0; max-width: calc(var(--u) * 40); padding: calc(var(--u) * 1.2) calc(var(--u) * 1.6) calc(var(--u) * 1.4); display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 0.6); }
+    .xl-label { font-size: calc(var(--u) * 2.2); font-weight: 800; white-space: nowrap; }
+    .xl-label small { font-size: 0.8em; font-weight: 600; color: var(--sub); }
+    .xl-panel svg { width: 100%; height: calc(var(--u) * 13); }
+    .xl-arrow { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 0.3); font-size: calc(var(--u) * 1.7); font-weight: 800; color: #ffb3ec; white-space: nowrap; }
+    .xl-arrow b { font-size: calc(var(--u) * 4.2); line-height: 1; }
+    .equation { font-size: calc(var(--u) * 2.1); font-weight: 700; padding: calc(var(--u) * 0.9) calc(var(--u) * 2.6); white-space: nowrap; text-align: center; }
+    .eq-pva { color: var(--pva); }
+    .eq-bor { color: var(--borate); }
+    .points { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(var(--u) * 1.8); width: 100%; }
+    .point { padding: calc(var(--u) * 1.4) calc(var(--u) * 1.8); text-align: center; }
+    .point h3 { font-size: calc(var(--u) * 2.4); font-weight: 900; color: #fff; margin-bottom: calc(var(--u) * 0.6); }
+    .point p { font-size: calc(var(--u) * 1.95); line-height: 1.45; color: var(--sub); word-break: keep-all; }
+
+    /* ===== 5장: 이론 ③ 강자성체 ===== */
+    .mag-wrap { display: grid; grid-template-columns: auto 1fr; gap: calc(var(--u) * 2.4); width: 100%; align-items: stretch; }
+    .mag-visual { padding: calc(var(--u) * 1.8) calc(var(--u) * 2.2); display: flex; flex-direction: column; justify-content: center; gap: calc(var(--u) * 1.8); }
+    .domain-row { display: flex; align-items: center; gap: calc(var(--u) * 1.6); }
+    .domain-label { width: calc(var(--u) * 9); font-size: calc(var(--u) * 2); font-weight: 800; line-height: 1.3; word-break: keep-all; }
+    .domains {
+      display: grid; grid-template-columns: repeat(3, calc(var(--u) * 4.4)); grid-auto-rows: calc(var(--u) * 4.4);
+      gap: 2px; padding: 2px; border-radius: calc(var(--u) * 0.8); overflow: hidden;
+      background: rgba(190, 130, 255, 0.4);
     }
+    .domains span { display: flex; align-items: center; justify-content: center; background: #2a1450; }
+    .domains i { display: inline-block; font-style: normal; font-size: calc(var(--u) * 2.4); line-height: 1; color: #ffd36b; }
+    .domains.aligned i { color: #ffe9a8; text-shadow: 0 0 10px rgba(255, 211, 107, 0.9); }
+    .magnet { display: flex; height: calc(var(--u) * 5); border-radius: calc(var(--u) * 0.6); overflow: hidden; font-weight: 900; font-size: calc(var(--u) * 2.1); box-shadow: 0 0 20px rgba(255, 95, 210, 0.35); }
+    .magnet span { width: calc(var(--u) * 4); display: flex; align-items: center; justify-content: center; color: #fff; }
+    .magnet .s { background: #3b82f6; }
+    .magnet .n { background: #ef4444; }
+    .mag-text { padding: calc(var(--u) * 2.2) calc(var(--u) * 2.6); display: flex; flex-direction: column; justify-content: center; gap: calc(var(--u) * 1.3); }
+    .mag-text h3 { font-size: calc(var(--u) * 2.8); font-weight: 900; color: #fff; }
+    .mag-def { font-size: calc(var(--u) * 2.1); line-height: 1.45; word-break: keep-all; }
+    .mag-steps { display: flex; flex-direction: column; gap: calc(var(--u) * 0.9); }
+    .mag-steps li { display: flex; align-items: flex-start; gap: calc(var(--u) * 1); font-size: calc(var(--u) * 2); line-height: 1.4; word-break: keep-all; }
+    .mag-steps .num { width: 1.6em; height: 1.6em; border-radius: 50%; font-size: 0.8em; margin-top: 0.05em; }
+    .mag-neo { font-size: calc(var(--u) * 1.8); color: var(--sub); line-height: 1.4; word-break: keep-all; padding-top: calc(var(--u) * 0.8); border-top: 1px dashed rgba(190, 130, 255, 0.35); }
+
+    /* ===== 6장: 시뮬레이션 (최대 크기) ===== */
+    .sim-inner { justify-content: flex-start; gap: calc(var(--u) * 0.8); padding: calc(var(--u) * 0.8) calc(var(--u) * 1.2) calc(var(--u) * 1); }
+    .sim-title { font-size: calc(var(--u) * 2.6); }
+    #simBox { position: relative; width: 100%; flex: 1 1 auto; min-height: 0; overflow: hidden; border-radius: calc(var(--u) * 1.4); }
+    #simFrame { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: transparent; }
+    #simError { display: none; position: absolute; inset: 0; align-items: center; justify-content: center; text-align: center; padding: 4vw; font-size: calc(var(--u) * 2); line-height: 1.7; }
+
+    /* ===== 7장: 주의사항 ===== */
+    .cautions { display: flex; justify-content: center; align-items: stretch; gap: calc(var(--u) * 2.4); max-width: 100%; }
+    .caution { padding: calc(var(--u) * 3) calc(var(--u) * 2.6); display: flex; flex-direction: column; }
+    .caution h3 { display: flex; align-items: center; gap: calc(var(--u) * 1); margin-bottom: calc(var(--u) * 2.4); font-size: calc(var(--u) * 3); font-weight: 900; color: #fff; white-space: nowrap; }
+    .caution h3 i { display: inline-block; width: calc(var(--u) * 0.7); height: 1.1em; border-radius: 999px; background: linear-gradient(180deg, #b46bff, #ff5fd2); box-shadow: 0 0 12px rgba(255, 95, 210, 0.7); }
+    .caution ul { display: flex; flex-direction: column; gap: calc(var(--u) * 2.2); }
+    .caution li { display: flex; align-items: flex-start; gap: calc(var(--u) * 1); font-size: calc(var(--u) * 2.1); line-height: 1.45; white-space: nowrap; color: #efe3ff; }
+    .caution li .n { flex: 0 0 auto; width: 1.6em; height: 1.6em; margin-top: 0.03em; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8em; font-weight: 800; background: rgba(180, 107, 255, 0.25); border: 1px solid rgba(180, 107, 255, 0.6); }
+    .caution.after li .n { background: rgba(255, 95, 210, 0.2); border-color: rgba(255, 95, 210, 0.6); }
+
+    /* ===== 8장: 실험 방법 ===== */
+    .method-inner { justify-content: flex-start; gap: calc(var(--u) * 1.6); padding: calc(var(--u) * 1.4) calc(var(--u) * 3) calc(var(--u) * 1.4); }
+    .method-inner .title { font-size: calc(var(--u) * 3.9); }
+    .steps { flex: 1 1 auto; min-height: 0; width: fit-content; max-width: 100%; display: flex; flex-direction: column; gap: calc(var(--u) * 0.9); }
+    .steps li { flex: 1 1 0; min-height: 0; display: flex; align-items: center; gap: calc(var(--u) * 1.6); padding: 0 calc(var(--u) * 2.4); border-radius: calc(var(--u) * 1.3); }
+    .steps .num { width: calc(var(--u) * 3.6); height: calc(var(--u) * 3.6); border-radius: calc(var(--u) * 0.9); font-size: calc(var(--u) * 1.9); }
+    .steps .txt { font-size: calc(var(--u) * 2.5); font-weight: 700; color: #f6ecff; white-space: nowrap; }
   </style>
 </head>
 
@@ -134,7 +249,6 @@
   </filter>
 </svg>
 
-<!-- 거울 현상일 때만 보이는 안내문 -->
 <div id="mirrorNotice">
   <div>
     ⚠️ 여기에는 원본 시뮬레이션이 나와야 하는데<br>
@@ -143,87 +257,273 @@
   </div>
 </div>
 
-<div id="deck" data-slide="0">
+<div id="deck" data-slide="0" tabindex="-1">
 
   <!-- ================= 상단 헤더 ================= -->
-  <header class="relative z-20 flex items-center justify-between px-8 h-[76px] shrink-0 border-0 border-b border-solid border-[rgba(190,130,255,0.18)] bg-[rgba(11,5,20,0.55)] backdrop-blur-md">
-    <div class="header-logo flex items-center gap-3 h-full">
-      <img
-        id="boothLogo"
-        src="슬라임을 조종하는 흑마법사.png"
-        alt="슬라임을 조종하는 흑마법사"
-        class="logo-knockout h-[60px] w-auto object-contain"
-        onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='block';"
-      />
-      <span id="logoFallback" class="hidden text-xl font-extrabold neon-title">슬라임을 조종하는 흑마법사</span>
+  <header class="topbar">
+    <div class="header-logo">
+      <img src="슬라임을 조종하는 흑마법사.png" alt="슬라임을 조종하는 흑마법사" class="logo-knockout"
+        onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='block';" />
+      <span id="logoFallback" class="fallback-text neon">슬라임을 조종하는 흑마법사</span>
     </div>
-    <div class="px-5 py-2 rounded-full text-sm md:text-base font-semibold tracking-tight text-[#f6e9ff] border border-solid border-[rgba(255,95,210,0.55)] bg-[rgba(180,107,255,0.14)] shadow-[0_0_18px_rgba(255,95,210,0.35)] whitespace-nowrap">
-      2026 부산대학교 화학교육과 오픈랩
+    <div class="top-right">
+      <span id="pageNo" class="page-no">1 / 8</span>
+      <span class="badge">2026 부산대학교 화학교육과 오픈랩</span>
     </div>
   </header>
 
-  <!-- ================= 슬라이드 무대 ================= -->
-  <main id="stage" class="relative flex-1 min-h-0">
+  <main id="stage">
 
-    <!-- ===== 1장: 로고(가운데, 크게) + 인트로 영상 ===== -->
-    <section class="slide" data-index="0" aria-label="인트로">
-      <div class="w-full h-full flex flex-col items-center justify-center px-[5vw] py-[2vh] gap-[2vh]">
-        <img
-          id="heroLogo"
-          src="슬라임을 조종하는 흑마법사.png"
-          alt="슬라임을 조종하는 흑마법사"
-          class="logo-knockout block shrink-0 w-auto object-contain"
-          style="height: clamp(140px, 30vh, 340px); max-width: 80vw;"
-          onerror="this.style.display='none'; document.getElementById('heroFallback').style.display='block';"
-        />
-        <h1 id="heroFallback" class="hidden m-0 shrink-0 neon-title font-black text-[clamp(2.4rem,5vw,5rem)] whitespace-nowrap">슬라임을 조종하는 흑마법사</h1>
-
-        <div class="flex-1 min-h-0 w-full flex items-center justify-center">
-          <div class="glass-card rounded-3xl p-2 h-full max-w-full" style="aspect-ratio: 16 / 9;">
-            <video
-              id="introVideo"
-              class="block w-full h-full object-contain rounded-2xl bg-black"
-              src="gemini_generated_video_7f9dc60e.mp4"
-              autoplay loop muted playsinline controls preload="auto"
-            ></video>
+    <!-- ===== 1. 인트로 ===== -->
+    <section class="slide" aria-label="인트로">
+      <div class="inner intro">
+        <img class="hero-logo logo-knockout" src="슬라임을 조종하는 흑마법사.png" alt="슬라임을 조종하는 흑마법사"
+          onerror="this.style.display='none'; document.getElementById('heroFallback').style.display='block';" />
+        <h1 id="heroFallback" class="hero-fallback neon">슬라임을 조종하는 흑마법사</h1>
+        <div class="video-wrap">
+          <div class="card video-card">
+            <video id="introVideo" src="gemini_generated_video_7f9dc60e.mp4" autoplay loop muted playsinline preload="auto"></video>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ===== 2장: 실험 목표 (좌우 두 칸 · 가운데 정렬 → 좌우 여백 대칭) ===== -->
-    <section class="slide" data-index="1" aria-label="실험 목표">
-      <div class="w-full h-full flex flex-col items-center justify-center px-[5vw] gap-[5vh]">
-        <h2 class="m-0 neon-title font-extrabold text-[clamp(2rem,3.4vw,3.6rem)] tracking-tight whitespace-nowrap">실험 목표</h2>
-
-        <div class="w-full max-w-[1500px] grid grid-cols-2 gap-[2.5vw]">
-          <!-- 목표 1 -->
-          <div class="glass-card min-w-0 rounded-3xl px-[2.5vw] py-[5vh] flex flex-col items-center text-center gap-[2.4vh]">
-            <div class="shrink-0 w-[clamp(3.5rem,5vw,6rem)] h-[clamp(3.5rem,5vw,6rem)] rounded-2xl flex items-center justify-center text-[clamp(1.4rem,2.2vw,2.6rem)] font-black text-white bg-gradient-to-br from-[#8f4dff] to-[#ff5fd2] shadow-[0_0_24px_rgba(255,95,210,0.5)]">01</div>
-            <p class="m-0 font-extrabold text-white text-[clamp(1.5rem,2.4vw,2.8rem)] leading-tight whitespace-nowrap">슬라임의 원리를 이해한다.</p>
-            <p class="m-0 text-[#d8c4f5] text-[clamp(0.95rem,1.35vw,1.6rem)] leading-relaxed keep-all">물풀 속 고분자 사슬(PVA)이 붕소 이온과 만나<br>끈적끈적한 슬라임으로 변하는 과정 알아보기</p>
+    <!-- ===== 2. 실험 목표 ===== -->
+    <section class="slide" aria-label="실험 목표">
+      <div class="inner" style="gap: calc(var(--u) * 4);">
+        <h2 class="title neon" style="font-size: calc(var(--u) * 4.8);">실험 목표</h2>
+        <div class="goals">
+          <div class="card goal">
+            <div class="num">01</div>
+            <p class="goal-h">슬라임의 원리를 이해한다.</p>
+            <p class="goal-d">물풀 속 고분자 사슬(PVA)이 붕소 이온과 만나 끈적끈적한 슬라임으로 변하는 과정 알아보기</p>
           </div>
-
-          <!-- 목표 2 -->
-          <div class="glass-card min-w-0 rounded-3xl px-[2.5vw] py-[5vh] flex flex-col items-center text-center gap-[2.4vh]">
-            <div class="shrink-0 w-[clamp(3.5rem,5vw,6rem)] h-[clamp(3.5rem,5vw,6rem)] rounded-2xl flex items-center justify-center text-[clamp(1.4rem,2.2vw,2.6rem)] font-black text-white bg-gradient-to-br from-[#8f4dff] to-[#ff5fd2] shadow-[0_0_24px_rgba(255,95,210,0.5)]">02</div>
-            <p class="m-0 font-extrabold text-white text-[clamp(1.5rem,2.4vw,2.8rem)] leading-tight whitespace-nowrap">자성의 원리를 이해한다.</p>
-            <p class="m-0 text-[#d8c4f5] text-[clamp(0.95rem,1.35vw,1.6rem)] leading-relaxed keep-all">강자성체인 철가루가 강력한 네오디뮴 자석을 만나<br>반응하며 움직이는 원리 관찰하기</p>
+          <div class="card goal">
+            <div class="num">02</div>
+            <p class="goal-h">자성의 원리를 이해한다.</p>
+            <p class="goal-d">강자성체인 철가루가 강력한 네오디뮴 자석을 만나 반응하며 움직이는 원리 관찰하기</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ===== 3장: 슬라임 연성 시뮬레이션 (원본 slime_sim.html 삽입 · 한 화면 자동 맞춤) ===== -->
-    <section class="slide" id="slide-sim" data-index="2" aria-label="슬라임 연성 시뮬레이션">
-      <div class="w-full h-full flex flex-col items-center px-[3vw] pt-[1.5vh] pb-[1vh] gap-[1.5vh]">
-        <h2 class="m-0 shrink-0 neon-title font-extrabold text-[clamp(1.6rem,2.4vw,2.6rem)] tracking-tight whitespace-nowrap">슬라임 연성 시뮬레이션</h2>
-        <div id="simBox" class="glass-card relative w-full flex-1 min-h-0 rounded-3xl overflow-hidden">
-          <!-- src는 스크립트가 넣어요 (거울 현상 때 무한 반복 방지) -->
+    <!-- ===== 3. 이론 ① 슬라임의 재료 ===== -->
+    <section class="slide" aria-label="이론 1 슬라임의 재료">
+      <div class="inner">
+        <div class="title-row">
+          <span class="chip">이론 ①</span>
+          <h2 class="title neon">슬라임의 원리 : 재료 알아보기</h2>
+        </div>
+
+        <div class="mat-grid">
+          <!-- 물풀: PVA -->
+          <div class="card mat">
+            <svg viewBox="0 0 220 90" aria-hidden="true">
+              <polyline points="5,30 40,50 75,30 110,50 145,30 180,50 215,30" fill="none" stroke="#ff7b9c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+              <g stroke="#ff7b9c" stroke-width="4" stroke-linecap="round">
+                <line x1="40" y1="50" x2="40" y2="66"/><line x1="110" y1="50" x2="110" y2="66"/><line x1="180" y1="50" x2="180" y2="66"/>
+              </g>
+              <g fill="#ffd1e0" font-size="17" font-weight="800" text-anchor="middle" font-family="Pretendard, Malgun Gothic, sans-serif">
+                <text x="40" y="84">OH</text><text x="110" y="84">OH</text><text x="180" y="84">OH</text>
+              </g>
+            </svg>
+            <p class="mat-name">물풀 → PVA</p>
+            <p class="mat-sub" style="color: var(--pva);">폴리비닐알코올</p>
+            <ul class="bullets">
+              <li>물에 잘 녹는 <b>긴 사슬 모양 고분자</b> (분자량이 큼)</li>
+              <li>사슬 곳곳에 <b>–OH</b>가 잔뜩 붙어 있음</li>
+            </ul>
+          </div>
+
+          <!-- 리뉴: 붕산 이온 -->
+          <div class="card mat">
+            <svg viewBox="0 0 220 90" aria-hidden="true">
+              <g stroke="#6fe3ff" stroke-width="4" stroke-linecap="round">
+                <line x1="110" y1="45" x2="70" y2="20"/><line x1="110" y1="45" x2="150" y2="20"/>
+                <line x1="110" y1="45" x2="70" y2="70"/><line x1="110" y1="45" x2="150" y2="70"/>
+              </g>
+              <circle cx="110" cy="45" r="16" fill="#6fe3ff"/>
+              <g font-family="Pretendard, Malgun Gothic, sans-serif" font-weight="800" text-anchor="middle">
+                <text x="110" y="51" font-size="17" fill="#0b0514">B⁻</text>
+                <text x="50" y="24" font-size="17" fill="#c9f6ff">HO</text><text x="170" y="24" font-size="17" fill="#c9f6ff">OH</text>
+                <text x="50" y="78" font-size="17" fill="#c9f6ff">HO</text><text x="170" y="78" font-size="17" fill="#c9f6ff">OH</text>
+              </g>
+            </svg>
+            <p class="mat-name">리뉴 → 붕산 이온</p>
+            <p class="mat-sub" style="color: var(--borate);">[B(OH)₄]⁻</p>
+            <ul class="bullets">
+              <li><b>–OH 팔이 4개</b>인 이온</li>
+              <li>PVA 사슬끼리 이어 주는 <b>연결 고리</b></li>
+            </ul>
+          </div>
+
+          <!-- 탄산수소나트륨 -->
+          <div class="card mat">
+            <svg viewBox="0 0 220 90" aria-hidden="true">
+              <rect x="20" y="14" width="180" height="62" rx="31" fill="rgba(255,211,107,0.12)" stroke="#ffd36b" stroke-width="3"/>
+              <text x="110" y="56" font-size="28" font-weight="900" fill="#ffd36b" text-anchor="middle" font-family="Pretendard, Malgun Gothic, sans-serif">NaHCO₃</text>
+            </svg>
+            <p class="mat-name">탄산수소나트륨</p>
+            <p class="mat-sub" style="color: #ffd36b;">베이킹소다</p>
+            <ul class="bullets">
+              <li>물에 녹으면 <b>약한 염기성</b></li>
+              <li>붕산 이온이 잘 만들어지게 도와서 <b>슬라임이 뭉침</b></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card sum-bar">
+          <span style="color: var(--pva);">물풀(PVA)</span> + <span style="color: var(--borate);">리뉴(붕산 이온)</span> + <span style="color: #ffd36b;">탄산수소나트륨</span> ⟶ <span class="neon">슬라임!</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 4. 이론 ② 가교결합 ===== -->
+    <section class="slide" aria-label="이론 2 가교결합">
+      <div class="inner xl-inner">
+        <div class="title-row">
+          <span class="chip">이론 ②</span>
+          <h2 class="title neon">슬라임의 원리 : 가교결합</h2>
+        </div>
+
+        <div class="xl-row">
+          <!-- 섞기 전 -->
+          <div class="card xl-panel">
+            <p class="xl-label">섞기 전 · 물풀 <small>(사슬이 따로따로)</small></p>
+            <svg viewBox="0 0 320 205" aria-hidden="true">
+              <g fill="#7dd3fc" opacity="0.5">
+                <circle cx="47" cy="57" r="6"/><circle cx="122" cy="57" r="6"/><circle cx="272" cy="57" r="6"/>
+                <circle cx="47" cy="102" r="6"/><circle cx="210" cy="102" r="6"/><circle cx="272" cy="102" r="6"/>
+                <circle cx="47" cy="147" r="6"/><circle cx="160" cy="147" r="6"/><circle cx="272" cy="147" r="6"/>
+              </g>
+              <g fill="none" stroke="#ff7b9c" stroke-width="5" stroke-linecap="round">
+                <path d="M10 35 Q47.5 21 85 35 T160 35 T235 35 T310 35"/>
+                <path d="M10 80 Q47.5 66 85 80 T160 80 T235 80 T310 80"/>
+                <path d="M10 125 Q47.5 111 85 125 T160 125 T235 125 T310 125"/>
+                <path d="M10 170 Q47.5 156 85 170 T160 170 T235 170 T310 170"/>
+              </g>
+            </svg>
+          </div>
+
+          <div class="xl-arrow"><span>+ 붕산 이온</span><b>⟶</b></div>
+
+          <!-- 섞은 후 -->
+          <div class="card xl-panel">
+            <p class="xl-label">섞은 후 · 슬라임 <small>(사슬이 그물로 연결)</small></p>
+            <svg viewBox="0 0 320 205" aria-hidden="true">
+              <g fill="#7dd3fc" opacity="0.6">
+                <circle cx="47" cy="57" r="6"/><circle cx="160" cy="57" r="6"/><circle cx="272" cy="57" r="6"/>
+                <circle cx="47" cy="102" r="6"/><circle cx="110" cy="102" r="6"/><circle cx="210" cy="102" r="6"/><circle cx="272" cy="102" r="6"/>
+                <circle cx="47" cy="147" r="6"/><circle cx="160" cy="147" r="6"/><circle cx="272" cy="147" r="6"/>
+              </g>
+              <g fill="none" stroke="#ff7b9c" stroke-width="5" stroke-linecap="round">
+                <path d="M10 35 Q47.5 21 85 35 T160 35 T235 35 T310 35"/>
+                <path d="M10 80 Q47.5 66 85 80 T160 80 T235 80 T310 80"/>
+                <path d="M10 125 Q47.5 111 85 125 T160 125 T235 125 T310 125"/>
+                <path d="M10 170 Q47.5 156 85 170 T160 170 T235 170 T310 170"/>
+              </g>
+              <g stroke="#6fe3ff" stroke-width="3" stroke-dasharray="4 3">
+                <line x1="85" y1="35" x2="85" y2="80"/><line x1="235" y1="35" x2="235" y2="80"/>
+                <line x1="160" y1="80" x2="160" y2="125"/>
+                <line x1="85" y1="125" x2="85" y2="170"/><line x1="235" y1="125" x2="235" y2="170"/>
+              </g>
+              <g fill="#6fe3ff">
+                <circle cx="85" cy="57.5" r="10"/><circle cx="235" cy="57.5" r="10"/>
+                <circle cx="160" cy="102.5" r="10"/>
+                <circle cx="85" cy="147.5" r="10"/><circle cx="235" cy="147.5" r="10"/>
+              </g>
+              <g fill="#0b0514" font-size="12" font-weight="900" text-anchor="middle" font-family="Pretendard, Malgun Gothic, sans-serif">
+                <text x="85" y="62">B</text><text x="235" y="62">B</text>
+                <text x="160" y="107">B</text>
+                <text x="85" y="152">B</text><text x="235" y="152">B</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <div class="card equation">
+          <span class="eq-pva">PVA 사슬의 –OH × 4</span> &nbsp;+&nbsp; <span class="eq-bor">B(OH)₄⁻</span> &nbsp;⇌&nbsp; <b>가교 결합된 그물 구조</b> &nbsp;+&nbsp; 4H₂O
+        </div>
+
+        <div class="points">
+          <div class="card point">
+            <h3>🔗 가교결합</h3>
+            <p>붕산 이온이 사슬 사이에 <b>다리</b>를 놓아 그물 구조가 됨</p>
+          </div>
+          <div class="card point">
+            <h3>💧 콜로이드</h3>
+            <p>그물 사이에 물이 갇혀 <b>액체도 고체도 아닌</b> 상태</p>
+          </div>
+          <div class="card point">
+            <h3>🫠 말랑말랑한 이유</h3>
+            <p>다리가 끊어졌다 다시 붙기를 반복(⇌)해서 <b>쭉 늘어남</b></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 5. 이론 ③ 강자성체 ===== -->
+    <section class="slide" aria-label="이론 3 강자성체">
+      <div class="inner">
+        <div class="title-row">
+          <span class="chip">이론 ③</span>
+          <h2 class="title neon">자성의 원리 : 강자성체</h2>
+        </div>
+
+        <div class="mag-wrap">
+          <!-- 그림: 자기 구역 -->
+          <div class="card mag-visual">
+            <div class="domain-row">
+              <p class="domain-label">자석이<br>없을 때</p>
+              <div class="domains">
+                <span><i style="transform:rotate(20deg)">➜</i></span>
+                <span><i style="transform:rotate(140deg)">➜</i></span>
+                <span><i style="transform:rotate(260deg)">➜</i></span>
+                <span><i style="transform:rotate(75deg)">➜</i></span>
+                <span><i style="transform:rotate(200deg)">➜</i></span>
+                <span><i style="transform:rotate(320deg)">➜</i></span>
+                <span><i style="transform:rotate(110deg)">➜</i></span>
+                <span><i style="transform:rotate(10deg)">➜</i></span>
+                <span><i style="transform:rotate(235deg)">➜</i></span>
+              </div>
+            </div>
+            <div class="domain-row">
+              <p class="domain-label">자석을<br>가까이 하면</p>
+              <div class="domains aligned">
+                <span><i>➜</i></span><span><i>➜</i></span><span><i>➜</i></span>
+                <span><i>➜</i></span><span><i>➜</i></span><span><i>➜</i></span>
+                <span><i>➜</i></span><span><i>➜</i></span><span><i>➜</i></span>
+              </div>
+              <div class="magnet"><span class="s">S</span><span class="n">N</span></div>
+            </div>
+          </div>
+
+          <!-- 설명 -->
+          <div class="card mag-text">
+            <h3>강자성체란?</h3>
+            <p class="mag-def">자석에 <span class="hl">강하게 끌리는 물질</span> (예: <b>철</b> · 니켈 · 코발트)</p>
+            <ol class="mag-steps">
+              <li><span class="num">1</span><span>철 속에는 작은 자석인 <b>‘자기 구역’</b>이 가득</span></li>
+              <li><span class="num">2</span><span>평소에는 방향이 제각각 → 서로 상쇄되어 자석 성질이 없음</span></li>
+              <li><span class="num">3</span><span>자석을 가까이 하면 <b>한 방향으로 정렬</b> → 강하게 끌림!</span></li>
+            </ol>
+            <p class="mag-neo">🧲 <b>네오디뮴 자석</b> : 네오디뮴·철·붕소로 만든 아주 강력한 영구 자석</p>
+          </div>
+        </div>
+
+        <div class="card sum-bar">
+          철가루는 슬라임 그물 속에 갇혀 있어서, 자석이 철가루를 당기면 <span class="neon">슬라임 전체가 끌려와요!</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 6. 시뮬레이션 ===== -->
+    <section class="slide" id="slide-sim" aria-label="슬라임 연성 시뮬레이션">
+      <div class="inner sim-inner">
+        <h2 class="title neon sim-title">슬라임 연성 시뮬레이션</h2>
+        <div id="simBox" class="card">
           <iframe id="simFrame" data-src="slime_sim.html" title="슬라임 연성 시뮬레이션"></iframe>
-
-          <!-- 원본 대신 발표 화면이 불러와졌을 때 나오는 경고 -->
-          <div id="simError" style="display:none; position:absolute; inset:0; align-items:center; justify-content:center; text-align:center; padding:4vw; font-size:clamp(1rem,1.6vw,1.8rem); line-height:1.7; color:#f3e8ff;">
+          <div id="simError">
             <div>
               ⚠️ 원본 시뮬레이션 대신 <b>발표 화면</b>이 불러와졌어요.<br>
               폴더의 <b>slime_sim.html</b>을 더블클릭해서 열어 보세요.<br>
@@ -234,112 +534,48 @@
       </div>
     </section>
 
-    <!-- ===== 4장: 실험 주의사항 (칸 너비 = 글 길이에 맞춤 → 좌우 여백 대칭) ===== -->
-    <section class="slide" data-index="3" aria-label="실험 주의사항">
-      <div class="w-full h-full flex flex-col items-center justify-center px-[4vw] gap-[4vh]">
-        <h2 class="m-0 neon-title font-extrabold text-[clamp(2rem,3.4vw,3.6rem)] tracking-tight whitespace-nowrap">실험 주의사항</h2>
-
-        <div class="flex justify-center items-stretch gap-[2.5vw] max-w-full">
-          <!-- 실험시 주의사항 -->
-          <div class="glass-card w-fit rounded-3xl px-[2.4vw] py-[4vh] flex flex-col">
-            <h3 class="m-0 mb-[3vh] text-[clamp(1.3rem,2vw,2.3rem)] font-extrabold text-white flex items-center gap-3 whitespace-nowrap">
-              <span class="inline-block w-3 h-[1.1em] rounded-full bg-gradient-to-b from-[#b46bff] to-[#ff5fd2] shadow-[0_0_12px_rgba(255,95,210,0.7)]"></span>
-              실험시 주의사항
-            </h3>
-            <ul class="list-none m-0 p-0 flex flex-col gap-[2.6vh]">
-              <li class="flex items-start gap-[0.9vw] text-[clamp(0.95rem,1.4vw,1.65rem)] leading-snug text-[#efe3ff]">
-                <span class="shrink-0 mt-[0.05em] w-[1.7em] h-[1.7em] rounded-full flex items-center justify-center text-[0.8em] font-bold bg-[rgba(180,107,255,0.25)] border border-solid border-[rgba(180,107,255,0.6)]">1</span>
-                <span class="whitespace-nowrap">선생님 지시에 따라 순서대로 진행하기</span>
-              </li>
-              <li class="flex items-start gap-[0.9vw] text-[clamp(0.95rem,1.4vw,1.65rem)] leading-snug text-[#efe3ff]">
-                <span class="shrink-0 mt-[0.05em] w-[1.7em] h-[1.7em] rounded-full flex items-center justify-center text-[0.8em] font-bold bg-[rgba(180,107,255,0.25)] border border-solid border-[rgba(180,107,255,0.6)]">2</span>
-                <span class="whitespace-nowrap">절대 입에 넣지 않기</span>
-              </li>
-              <li class="flex items-start gap-[0.9vw] text-[clamp(0.95rem,1.4vw,1.65rem)] leading-snug text-[#efe3ff]">
-                <span class="shrink-0 mt-[0.05em] w-[1.7em] h-[1.7em] rounded-full flex items-center justify-center text-[0.8em] font-bold bg-[rgba(180,107,255,0.25)] border border-solid border-[rgba(180,107,255,0.6)]">3</span>
-                <span class="whitespace-nowrap">탄산수소나트륨이 눈에 들어간 경우,<br>선생님께 말한 뒤 흐르는 물에 눈 씻기</span>
-              </li>
+    <!-- ===== 7. 실험 주의사항 ===== -->
+    <section class="slide" aria-label="실험 주의사항">
+      <div class="inner" style="gap: calc(var(--u) * 3.4);">
+        <h2 class="title neon">실험 주의사항</h2>
+        <div class="cautions">
+          <div class="card caution">
+            <h3><i></i>실험시 주의사항</h3>
+            <ul>
+              <li><span class="n">1</span><span>선생님 지시에 따라 <span class="hl">순서대로</span> 진행하기</span></li>
+              <li><span class="n">2</span><span>절대 입에 넣지 않기</span></li>
+              <li><span class="n">3</span><span>탄산수소나트륨이 <span class="hl">눈에 들어간 경우,</span><br>선생님께 말한 뒤 흐르는 물에 눈 씻기</span></li>
             </ul>
           </div>
-
-          <!-- 실험 후 주의사항 -->
-          <div class="glass-card w-fit rounded-3xl px-[2.4vw] py-[4vh] flex flex-col">
-            <h3 class="m-0 mb-[3vh] text-[clamp(1.3rem,2vw,2.3rem)] font-extrabold text-white flex items-center gap-3 whitespace-nowrap">
-              <span class="inline-block w-3 h-[1.1em] rounded-full bg-gradient-to-b from-[#ff5fd2] to-[#b46bff] shadow-[0_0_12px_rgba(255,95,210,0.7)]"></span>
-              실험 후 주의사항
-            </h3>
-            <ul class="list-none m-0 p-0 flex flex-col gap-[2.6vh]">
-              <li class="flex items-start gap-[0.9vw] text-[clamp(0.95rem,1.4vw,1.65rem)] leading-snug text-[#efe3ff]">
-                <span class="shrink-0 mt-[0.05em] w-[1.7em] h-[1.7em] rounded-full flex items-center justify-center text-[0.8em] font-bold bg-[rgba(255,95,210,0.2)] border border-solid border-[rgba(255,95,210,0.6)]">1</span>
-                <span class="whitespace-nowrap">만든 슬라임을 가져가는 것은 자유!</span>
-              </li>
-              <li class="flex items-start gap-[0.9vw] text-[clamp(0.95rem,1.4vw,1.65rem)] leading-snug text-[#efe3ff]">
-                <span class="shrink-0 mt-[0.05em] w-[1.7em] h-[1.7em] rounded-full flex items-center justify-center text-[0.8em] font-bold bg-[rgba(255,95,210,0.2)] border border-solid border-[rgba(255,95,210,0.6)]">2</span>
-                <span class="whitespace-nowrap">단 버릴 때에는 이곳(실험실) 책상에 두고 가거나<br>본부 선생님께 버리고 싶다고 말씀 드리기</span>
-              </li>
-              <li class="flex items-start gap-[0.9vw] text-[clamp(0.95rem,1.4vw,1.65rem)] leading-snug text-[#efe3ff]">
-                <span class="shrink-0 mt-[0.05em] w-[1.7em] h-[1.7em] rounded-full flex items-center justify-center text-[0.8em] font-bold bg-[rgba(255,95,210,0.2)] border border-solid border-[rgba(255,95,210,0.6)]">3</span>
-                <span class="whitespace-nowrap">학교 화학관 내 아무 장소에 버리지 않기</span>
-              </li>
+          <div class="card caution after">
+            <h3><i></i>실험 후 주의사항</h3>
+            <ul>
+              <li><span class="n">1</span><span>만든 슬라임을 가져가는 것은 자유!</span></li>
+              <li><span class="n">2</span><span>단, 버릴 때에는 이곳(실험실)<br>책상에 두고 가거나 본부 선생님께<br>버리고 싶다고 말씀 드리기</span></li>
+              <li><span class="n">3</span><span>학교 화학관 내 <span class="hl">아무 장소에 버리지 않기</span></span></li>
             </ul>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ===== 5장: 실험 방법 ===== -->
-    <section class="slide" data-index="4" aria-label="실험 방법">
-      <div class="w-full h-full flex flex-col items-center px-[5vw] pt-[2.4vh] pb-[1.6vh] gap-[2vh]">
-        <h2 class="m-0 shrink-0 neon-title font-extrabold text-[clamp(1.8rem,3vw,3.2rem)] tracking-tight whitespace-nowrap">실험 방법</h2>
-
-        <ol class="list-none m-0 p-0 w-full max-w-[1300px] flex-1 min-h-0 flex flex-col gap-[1.1vh]">
-          <li class="glass-card flex-1 min-h-0 rounded-2xl px-[2vw] flex items-center gap-[1.6vw]">
-            <span class="shrink-0 w-[clamp(2.2rem,5vh,3.4rem)] h-[clamp(2.2rem,5vh,3.4rem)] rounded-xl flex items-center justify-center font-black text-white text-[clamp(1rem,2.4vh,1.6rem)] bg-gradient-to-br from-[#8f4dff] to-[#ff5fd2]">1</span>
-            <span class="text-[clamp(1rem,2.7vh,1.75rem)] font-semibold text-[#f6ecff]">종이컵에 물풀 한 통을 넣는다.</span>
-          </li>
-          <li class="glass-card flex-1 min-h-0 rounded-2xl px-[2vw] flex items-center gap-[1.6vw]">
-            <span class="shrink-0 w-[clamp(2.2rem,5vh,3.4rem)] h-[clamp(2.2rem,5vh,3.4rem)] rounded-xl flex items-center justify-center font-black text-white text-[clamp(1rem,2.4vh,1.6rem)] bg-gradient-to-br from-[#8f4dff] to-[#ff5fd2]">2</span>
-            <span class="text-[clamp(1rem,2.7vh,1.75rem)] font-semibold text-[#f6ecff]">리뉴 5mL를 1. 에 넣고 나무막대로 잘 섞는다.</span>
-          </li>
-          <li class="glass-card flex-1 min-h-0 rounded-2xl px-[2vw] flex items-center gap-[1.6vw]">
-            <span class="shrink-0 w-[clamp(2.2rem,5vh,3.4rem)] h-[clamp(2.2rem,5vh,3.4rem)] rounded-xl flex items-center justify-center font-black text-white text-[clamp(1rem,2.4vh,1.6rem)] bg-gradient-to-br from-[#8f4dff] to-[#ff5fd2]">3</span>
-            <span class="text-[clamp(1rem,2.7vh,1.75rem)] font-semibold text-[#f6ecff]">철가루 3g을 넣고 잘 섞는다.</span>
-          </li>
-          <li class="glass-card flex-1 min-h-0 rounded-2xl px-[2vw] flex items-center gap-[1.6vw]">
-            <span class="shrink-0 w-[clamp(2.2rem,5vh,3.4rem)] h-[clamp(2.2rem,5vh,3.4rem)] rounded-xl flex items-center justify-center font-black text-white text-[clamp(1rem,2.4vh,1.6rem)] bg-gradient-to-br from-[#8f4dff] to-[#ff5fd2]">4</span>
-            <span class="text-[clamp(1rem,2.7vh,1.75rem)] font-semibold text-[#f6ecff]">탄산수소 나트륨 수용액 4mL를 넣고 뭉칠 때까지 섞는다.</span>
-          </li>
-          <li class="glass-card flex-1 min-h-0 rounded-2xl px-[2vw] flex items-center gap-[1.6vw]">
-            <span class="shrink-0 w-[clamp(2.2rem,5vh,3.4rem)] h-[clamp(2.2rem,5vh,3.4rem)] rounded-xl flex items-center justify-center font-black text-white text-[clamp(1rem,2.4vh,1.6rem)] bg-gradient-to-br from-[#8f4dff] to-[#ff5fd2]">5</span>
-            <span class="text-[clamp(1rem,2.7vh,1.75rem)] font-semibold text-[#f6ecff]">완전히 뭉치면 종이컵에서 꺼낸다.</span>
-          </li>
-          <li class="glass-card flex-1 min-h-0 rounded-2xl px-[2vw] flex items-center gap-[1.6vw]">
-            <span class="shrink-0 w-[clamp(2.2rem,5vh,3.4rem)] h-[clamp(2.2rem,5vh,3.4rem)] rounded-xl flex items-center justify-center font-black text-white text-[clamp(1rem,2.4vh,1.6rem)] bg-gradient-to-br from-[#8f4dff] to-[#ff5fd2]">6</span>
-            <span class="text-[clamp(1rem,2.7vh,1.75rem)] font-semibold text-[#f6ecff]">네오디뮴 자석을 이용하여 슬라임의 변화를 관찰한다.</span>
-          </li>
-          <li class="glass-card flex-1 min-h-0 rounded-2xl px-[2vw] flex items-center gap-[1.6vw]">
-            <span class="shrink-0 w-[clamp(2.2rem,5vh,3.4rem)] h-[clamp(2.2rem,5vh,3.4rem)] rounded-xl flex items-center justify-center font-black text-white text-[clamp(1rem,2.4vh,1.6rem)] bg-gradient-to-br from-[#8f4dff] to-[#ff5fd2]">7</span>
-            <span class="text-[clamp(1rem,2.7vh,1.75rem)] font-semibold text-[#f6ecff]">슬라임을 지퍼백에 담아 보관한다.</span>
-          </li>
+    <!-- ===== 8. 실험 방법 ===== -->
+    <section class="slide" aria-label="실험 방법">
+      <div class="inner method-inner">
+        <h2 class="title neon">실험 방법</h2>
+        <ol class="steps">
+          <li class="card"><span class="num">1</span><span class="txt">종이컵에 물풀 한 통을 넣는다.</span></li>
+          <li class="card"><span class="num">2</span><span class="txt">리뉴 5mL를 1. 에 넣고 나무막대로 잘 섞는다.</span></li>
+          <li class="card"><span class="num">3</span><span class="txt">철가루 3g을 넣고 잘 섞는다.</span></li>
+          <li class="card"><span class="num">4</span><span class="txt">탄산수소 나트륨 수용액 4mL를 넣고 뭉칠 때까지 섞는다.</span></li>
+          <li class="card"><span class="num">5</span><span class="txt">완전히 뭉치면 종이컵에서 꺼낸다.</span></li>
+          <li class="card"><span class="num">6</span><span class="txt">네오디뮴 자석을 이용하여 슬라임의 변화를 관찰한다.</span></li>
+          <li class="card"><span class="num">7</span><span class="txt">슬라임을 지퍼백에 담아 보관한다.</span></li>
         </ol>
       </div>
     </section>
 
   </main>
-
-  <!-- ================= 하단 내비게이션 ================= -->
-  <footer class="relative z-20 h-[84px] shrink-0 flex items-center justify-center gap-6">
-    <button id="prevBtn" type="button" aria-label="이전 슬라이드"
-      class="w-12 h-12 rounded-full border border-solid border-[rgba(190,130,255,0.45)] bg-[rgba(180,107,255,0.12)] text-[#f3e8ff] text-xl cursor-pointer flex items-center justify-center transition hover:bg-[rgba(180,107,255,0.3)] hover:shadow-[0_0_16px_rgba(180,107,255,0.6)] disabled:opacity-30 disabled:cursor-default">
-      &#10094;
-    </button>
-    <div id="slideDots" class="flex items-center gap-3"></div>
-    <button id="nextBtn" type="button" aria-label="다음 슬라이드"
-      class="w-12 h-12 rounded-full border border-solid border-[rgba(255,95,210,0.5)] bg-[rgba(255,95,210,0.12)] text-[#f3e8ff] text-xl cursor-pointer flex items-center justify-center transition hover:bg-[rgba(255,95,210,0.3)] hover:shadow-[0_0_16px_rgba(255,95,210,0.6)] disabled:opacity-30 disabled:cursor-default">
-      &#10095;
-    </button>
-  </footer>
-
 </div>
 
 <script>
@@ -348,7 +584,7 @@
 
   var video = document.getElementById('introVideo');
 
-  // ★ 거울 현상: 3장 창 안에 불러와진 발표 화면이면 아무것도 실행하지 않음 (무한 반복 방지)
+  // 거울 현상: 시뮬레이션 창 안에 불러와진 발표 화면이면 아무것도 실행하지 않음
   if (window.__deckInFrame) {
     try { if (video) { video.removeAttribute('autoplay'); video.pause(); } } catch (e) {}
     return;
@@ -356,18 +592,18 @@
 
   var deck     = document.getElementById('deck');
   var slides   = Array.prototype.slice.call(document.querySelectorAll('#stage .slide'));
-  var dotsWrap = document.getElementById('slideDots');
-  var prevBtn  = document.getElementById('prevBtn');
-  var nextBtn  = document.getElementById('nextBtn');
+  var pageNo   = document.getElementById('pageNo');
   var simBox   = document.getElementById('simBox');
   var simFrame = document.getElementById('simFrame');
   var simError = document.getElementById('simError');
+  var SIM_INDEX = slides.indexOf(document.getElementById('slide-sim'));
   var current  = 0;
-  var dots     = [];
+  var simKeysOK = false;
   if (!slides.length) return;
 
-  /* ===== 3장 시뮬레이션 크기 자동 맞춤 =====
-     3장 아래가 잘리면 SIM_H를 900, 1000처럼 키우세요. */
+  /* ===== 시뮬레이션 크기 자동 맞춤 =====
+     시뮬레이션 아래가 잘리면 SIM_H를 900, 1000처럼 키우세요.
+     양옆에 빈 공간이 너무 많으면 SIM_W를 1400, 1600처럼 키워 보세요. */
   var SIM_W = 1280;
   var SIM_H = 800;
 
@@ -381,7 +617,6 @@
     var w = SIM_W, h = SIM_H;
     simFrame.style.width  = w + 'px';
     simFrame.style.height = h + 'px';
-
     try {
       var doc = simFrame.contentDocument;
       if (doc && doc.documentElement) {
@@ -389,23 +624,18 @@
         if (realH > h) { h = realH; simFrame.style.height = h + 'px'; }
       }
     } catch (e) {}
-
     var bw = simBox.clientWidth, bh = simBox.clientHeight;
     if (!bw || !bh) return;
-    var pad = 10;
+    var pad = 6;
     var s = Math.min((bw - pad * 2) / w, (bh - pad * 2) / h);
-    s = Math.max(0.3, Math.min(s, 1.6));
-
+    s = Math.max(0.3, Math.min(s, 2));
     simFrame.style.transform = 'scale(' + s + ')';
     simFrame.style.left = Math.round((bw - w * s) / 2) + 'px';
     simFrame.style.top  = Math.round((bh - h * s) / 2) + 'px';
   }
 
-  // 3장 창 안에서 발표 화면이 "나 거울이야" 신호를 보내면 경고 표시
   window.addEventListener('message', function (e) {
-    if (e.data && e.data.type === 'deck-mirror' && simFrame && e.source === simFrame.contentWindow) {
-      showSimError();
-    }
+    if (e.data && e.data.type === 'deck-mirror' && simFrame && e.source === simFrame.contentWindow) showSimError();
   });
 
   if (simFrame) {
@@ -413,38 +643,27 @@
       try {
         var d = simFrame.contentDocument;
         if (d && d.getElementById('deck')) { showSimError(); return; }
+        // 가능하면 시뮬레이션 안에서도 스페이스바/방향키로 넘기기
+        if (d) { d.addEventListener('keydown', onKey, true); simKeysOK = true; }
       } catch (e) {}
       fitSim();
       setTimeout(fitSim, 300);
       setTimeout(fitSim, 1000);
     });
-    // 원본 시뮬레이션 불러오기
     simFrame.src = simFrame.getAttribute('data-src');
   }
   window.addEventListener('resize', fitSim);
 
-  // 마우스가 시뮬레이션 밖으로 나가면 키보드 넘기기가 다시 작동하도록
-  if (simBox && simFrame) {
-    simBox.addEventListener('mouseleave', function () {
+  // 시뮬레이션을 클릭하면 키보드가 시뮬레이션으로 넘어가므로, 곧바로 발표 화면으로 되돌림
+  // (클릭·드래그는 그대로 작동해요)
+  window.addEventListener('blur', function () {
+    if (simKeysOK) return;
+    setTimeout(function () {
       if (document.activeElement === simFrame) {
-        try { simFrame.blur(); } catch (e) {}
+        try { deck.focus({ preventScroll: true }); } catch (e) { deck.focus(); }
       }
-    });
-  }
-
-  /* ===== 점 인디케이터 ===== */
-  if (dotsWrap) {
-    dotsWrap.innerHTML = '';
-    slides.forEach(function (_, i) {
-      var d = document.createElement('button');
-      d.type = 'button';
-      d.className = 'dot';
-      d.setAttribute('aria-label', (i + 1) + '번 슬라이드로 이동');
-      d.addEventListener('click', function () { goTo(i); });
-      dotsWrap.appendChild(d);
-      dots.push(d);
-    });
-  }
+    }, 0);
+  });
 
   function handleVideo(index) {
     if (!video) return;
@@ -462,57 +681,49 @@
     if (typeof index !== 'number' || isNaN(index)) return;
     index = Math.max(0, Math.min(slides.length - 1, index));
     current = index;
-
-    if (deck) deck.setAttribute('data-slide', String(index));
-
+    deck.setAttribute('data-slide', String(index));
     slides.forEach(function (s, i) {
       var active = (i === index);
       s.classList.toggle('is-active', active);
       s.setAttribute('aria-hidden', active ? 'false' : 'true');
     });
-    dots.forEach(function (d, i) { d.classList.toggle('is-active', i === index); });
-
-    if (prevBtn) prevBtn.disabled = (index === 0);
-    if (nextBtn) nextBtn.disabled = (index === slides.length - 1);
-
+    if (pageNo) pageNo.textContent = (index + 1) + ' / ' + slides.length;
     handleVideo(index);
-    if (index === 2) setTimeout(fitSim, 50);
+    if (index === SIM_INDEX) setTimeout(fitSim, 60);
   }
 
   function next() { if (current < slides.length - 1) goTo(current + 1); }
   function prev() { if (current > 0) goTo(current - 1); }
 
-  if (prevBtn) prevBtn.addEventListener('click', prev);
-  if (nextBtn) nextBtn.addEventListener('click', next);
+  // 글자를 입력하는 칸에서는 넘기지 않음
+  function isTyping(t) {
+    if (!t || !t.tagName) return false;
+    var tag = t.tagName.toLowerCase();
+    if (tag === 'textarea' || tag === 'select' || t.isContentEditable) return true;
+    if (tag === 'input') {
+      var type = (t.getAttribute('type') || 'text').toLowerCase();
+      return ['text', 'number', 'search', 'email', 'password', 'tel', 'url'].indexOf(type) !== -1;
+    }
+    return false;
+  }
 
-  document.addEventListener('click', function (e) {
-    var btn = e.target && e.target.closest ? e.target.closest('button') : null;
-    if (btn) setTimeout(function () { try { btn.blur(); } catch (err) {} }, 0);
-  });
-
-  document.addEventListener('keydown', function (e) {
-    var t = e.target;
-    var tag = t && t.tagName ? t.tagName.toLowerCase() : '';
-    if (tag === 'input' || tag === 'textarea' || tag === 'select' || (t && t.isContentEditable)) return;
-
+  function onKey(e) {
+    if (isTyping(e.target)) return;
     switch (e.key) {
-      case 'ArrowRight': case 'PageDown':
+      case 'ArrowRight': case 'ArrowDown': case 'PageDown': case ' ': case 'Spacebar':
         e.preventDefault(); next(); break;
-      case 'ArrowLeft': case 'PageUp':
+      case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
         e.preventDefault(); prev(); break;
-      case ' ': case 'Spacebar':
-        e.preventDefault();
-        if (t && typeof t.blur === 'function' && (tag === 'button' || tag === 'video')) t.blur();
-        next(); break;
       case 'Home':
         e.preventDefault(); goTo(0); break;
       case 'End':
         e.preventDefault(); goTo(slides.length - 1); break;
     }
-  });
+  }
+  document.addEventListener('keydown', onKey);
 
   goTo(0);
-  fitSim();
+  try { deck.focus({ preventScroll: true }); } catch (e) { deck.focus(); }
 })();
 </script>
 </body>
